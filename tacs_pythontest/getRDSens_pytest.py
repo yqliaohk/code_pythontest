@@ -121,7 +121,7 @@ def getRD(Xaero,pt,vars,Xpts):
     Xb = np.zeros_like(X)
     Xab = np.zeros_like(Xa)
 
-    Xa = solidjacobian(X,N, Na, Nb, Nc, Xpts)
+    Xa, X = solidjacobian(X,N, Na, Nb, Nc, Xpts)
 
     J = np.zeros(9)
     h, J = jacobian3d(Xa)
@@ -167,12 +167,12 @@ def getRDXptSens(Xaero,XaeroSens,pt,vars,Xpts,XptsSens):
     X = np.zeros((3))
     Xa = np.zeros((9))
 
-    Xa = solidjacobian(X,N, Na, Nb, Nc, Xpts)
+    Xa, X = solidjacobian(X,N, Na, Nb, Nc, Xpts)
 
     XSens = np.zeros((3))
     XaSens = np.zeros((9))
 
-    XaSens = solidjacobian(XSens,N, Na, Nb, Nc, Xpts)
+    XaSens, XSens = solidjacobian(XSens,N, Na, Nb, Nc, Xpts)
 
     sh = np.zeros(1)
     J = np.zeros(9)
@@ -356,8 +356,37 @@ def solidjacobian(X, N, Na, Nb, Nc, Xpts):
         Xa[7] = Xa[7] + Xpts[3*i+2]*Nb[i]
         Xa[8] = Xa[8] + Xpts[3*i+2]*Nc[i]
 
-    # print('in solidjacobian, Xd=',Xa)
-    return Xa
+    print('in solidjacobian, Xd=',Xa)
+    return Xa, X
+
+def solidjacobianSens(XSens, N, Na, Nb, Nc, XptsSens):
+    XaSens = np.zeros(num_nodes*9)
+    XSens = np.zeros(9)
+    # print X
+    # print('Xpts=',Xpts)
+    # print('N=',N)
+    # print('Na=',Na)
+    # print('Nb=',Nb)
+    
+    for i in range(num_nodes):
+        XSens[3*i] = N[i]
+        XSens[3*i+1] = N[i]
+        XSens[3*i+2] = N[i]
+
+        XaSens[9*i] = Na[i]
+        XaSens[9*i+1] = Nb[i]
+        XaSens[9*i+2] = Nc[i]
+
+        XaSens[9*i+3] = Na[i]
+        XaSens[9*i+4] = Nb[i]
+        XaSens[9*i+5] = Nc[i]
+        
+        XaSens[9*i+6] = Na[i]
+        XaSens[9*i+7] = Nb[i]
+        XaSens[9*i+8] = Nc[i]
+
+    print('in solidjacobianSens, Xd=',XaSens)
+    return XaSens
 
 def jacobian3d(Xd):
     # print('Xd=',Xd)
@@ -615,7 +644,7 @@ def solidjacobianReverse(Xptsb, Xb, Xab, N, Na, Nb, Nc):
 
 num_nodes = 8
 Xpts = 0.1*np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6])
-dXpts = 0.00000001*np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6])
+dXpts = 0.0000001*np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6])
 
 XptsSens = 0.1*np.array([4,7,0,3,4,7,5,3,4,7,1,9,3,4,6,8,1,4,6,5,7,3,7,2,3,4,1])
 vars = 0.1*np.array([2,5,6,6,7,5,4,7,1,2,5,6,6,7,5,4,7,1,2,5,6,6,7,5,4,7,1])
