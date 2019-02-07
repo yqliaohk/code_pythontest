@@ -12,12 +12,12 @@ def getRDSens(Uaerob, Xaero, pt, vars,Xpts):
 
     N, Na, Nb, Nc = getshapefunction(pt, N, Na, Nb, Nc)
 
-    X = np.zeros((3))
-    Xa = np.zeros((9))
+    X = np.zeros(3)
+    Xa = np.zeros(9)
     Xb = np.zeros_like(X)
     Xab = np.zeros_like(Xa)
 
-    Xa = solidjacobian(X,N, Na, Nb, Nc, Xpts)
+    Xa, X = solidjacobian(X,N, Na, Nb, Nc, Xpts)
 
     J = np.zeros(9)
     h, J = jacobian3d(Xa)
@@ -83,9 +83,9 @@ def getRDSens(Uaerob, Xaero, pt, vars,Xpts):
 
     varsb = ub
 
-    rot[0] = 0.5*(Ud[5] - Ud[7])
-    rot[1] = 0.5*(Ud[6] - Ud[2]) 
-    rot[2] = 0.5*(Ud[1] - Ud[3])
+    # rot[0] = 0.5*(Ud[5] - Ud[7])
+    # rot[1] = 0.5*(Ud[6] - Ud[2]) 
+    # rot[2] = 0.5*(Ud[1] - Ud[3])
 
     Udb = np.zeros(9)
 
@@ -93,17 +93,33 @@ def getRDSens(Uaerob, Xaero, pt, vars,Xpts):
     Udb[1] = Udb[1]+0.5*rotb[2]
     Udb[2] = Udb[2]-0.5*rotb[1]
     Udb[3] = Udb[3]-0.5*rotb[2]
-    Udb[5] = Udb[4]+0.5*rotb[0]
-    Udb[6] = Udb[5]+0.5*rotb[1]
-    Udb[7] = Udb[6]-0.5*rotb[0]
+    Udb[5] = Udb[5]+0.5*rotb[0]
+    Udb[6] = Udb[6]+0.5*rotb[1]
+    Udb[7] = Udb[7]-0.5*rotb[0]
 
     Jb = np.zeros(9)
+    # print('before getDeformGradientReverse, Udb = ',Udb) # get input for checking in part
+    # print('before getDeformGradientReverse, J = ',J) # get input for checking in part
+    # print('before getDeformGradientReverse, Na = ', Na)
+    # print('before getDeformGradientReverse, Nb = ', Nb)
+    # print('before getDeformGradientReverse, Nc = ', Nc)
+    # print('before getDeformGradientReverse, vars = ', vars)
+    # print('before getDeformGradientReverse, varsb = ', varsb)
     Jb, varsb = getDeformGradientReverse(Udb, J, Jb, Na, Nb, Nc, vars, varsb)
 
+    # print('before jacobian3dReverse, Xa = ', Xa) # get input for checking in part
+    # print('before jacobian3dReverse, Jb = ', Jb) # get input for checking in part
     Xab = jacobian3dReverse(Xa, Jb)
 
-    Xptsb = np.zeros_like(Xpts)
-    Xptsb = solidjacobianReverse(Xptsb, Xb, Xab, N, Na, Nb, Nc)
+    
+
+    # print('before solidjacobianReverse, Xb = ', Xb) # get input for checking in part
+    # print('before solidjacobianReverse, Xab = ', Xab) # get input for checking in part
+    # print('before solidjacobianReverse, N = ', N)
+    # print('before solidjacobianReverse, Na = ', Na)
+    # print('before solidjacobianReverse, Nb = ', Nb)
+    # print('before solidjacobianReverse, Nc = ', Nc)
+    Xptsb = solidjacobianReverse(Xb, Xab, N, Na, Nb, Nc)
 
     return Xaerob, varsb, Xptsb
 
@@ -155,7 +171,7 @@ def getRD(Xaero,pt,vars,Xpts):
 
     return Uaero
 
-def getRDXptSens(Xaero,XaeroSens,pt,vars,Xpts,XptsSens):
+def getRDforward(Xaero,XaeroSens,pt,varsSens,vars,Xpts,XptsSens):
     global num_nodes
     N = np.zeros(num_nodes)
     Na = np.zeros(num_nodes)
@@ -164,24 +180,37 @@ def getRDXptSens(Xaero,XaeroSens,pt,vars,Xpts,XptsSens):
 
     N, Na, Nb, Nc = getshapefunction(pt, N, Na, Nb, Nc)
 
-    X = np.zeros((3))
-    Xa = np.zeros((9))
+    X = np.zeros(3)
+    Xa = np.zeros(9)
 
     Xa, X = solidjacobian(X,N, Na, Nb, Nc, Xpts)
 
-    XSens = np.zeros((3))
-    XaSens = np.zeros((9))
+    XSens = np.zeros(3)
+    XaSens = np.zeros(9)
 
-    XaSens, XSens = solidjacobian(XSens,N, Na, Nb, Nc, Xpts)
+    # print('before solidjacobianSens, XptsSens = ', XptsSens) # get input for checking in part
+    # print('before solidjacobianSens, N = ', N)
+    # print('before solidjacobianSens, Na = ', Na)
+    # print('before solidjacobianSens, Nb = ', Nb)
+    # print('before solidjacobianSens, Nc = ', Nc)
+    XaSens, XSens = solidjacobianSens(XSens,N, Na, Nb, Nc, XptsSens)
 
     sh = np.zeros(1)
     J = np.zeros(9)
     JSens = np.zeros(9)
 
-    J, JSens, sh, h = jacobian3dSens(Xa, XaSens)
+    # print('before jacobian3dSens, Xa = ', Xa) # get input for checking in part
+    # print('before jacobian3dSens, XaSens = ', XaSens) # get input for checking in part
+    J, JSens, sh, h = jacobian3dSens(Xa, XaSens, sh)
 
     Ud = np.zeros(9)
     UdSens = np.zeros(9)
+    # print('before getDeformGradientSens, J = ',J)
+    # print('before getDeformGradientSens, JSens = ',JSens)
+    # print('before getDeformGradientSens, vars = ',vars)
+    # print('before getDeformGradientSens, Na = ',Na)
+    # print('before getDeformGradientSens, Nb = ',Nb)
+    # print('before getDeformGradientSens, Nc = ',Nc)
     Ud, UdSens = getDeformGradientSens(J, JSens, Na, Nb, Nc, vars)
 
     R = np.zeros(3)
@@ -205,16 +234,16 @@ def getRDXptSens(Xaero,XaeroSens,pt,vars,Xpts,XptsSens):
 
     UaeroSens = np.zeros(3)
 
-    UaeroSens[0] = (rotSens[1]*R[2] - rotSens[2]*R[1] + 
+    UaeroSens[0] = (rotSens[1]*R[2] - rotSens[2]*R[1] + \
 		  rot[1]*RSens[2] - rot[2]*RSens[1])
-    UaeroSens[1] = (rotSens[2]*R[0] - rotSens[0]*R[2] + 
+    UaeroSens[1] = (rotSens[2]*R[0] - rotSens[0]*R[2] + \
 		  rot[2]*RSens[0] - rot[0]*RSens[2])
-    UaeroSens[2] = (rotSens[0]*R[1] - rotSens[1]*R[0] + 
+    UaeroSens[2] = (rotSens[0]*R[1] - rotSens[1]*R[0] + \
 		  rot[0]*RSens[1] - rot[1]*RSens[0])
 
     return UaeroSens
 
-def jacobian3dSens(Xd,sXd):
+def jacobian3dSens(Xd,sXd,sh):
     h = (Xd[8]*(Xd[0]*Xd[4] - Xd[3]*Xd[1])- Xd[7]*(Xd[0]*Xd[5] - Xd[3]*Xd[2])+ Xd[6]*(Xd[1]*Xd[5] - Xd[2]*Xd[4]))
     hinv = 1.0/h
 
@@ -360,8 +389,8 @@ def solidjacobian(X, N, Na, Nb, Nc, Xpts):
     return Xa, X
 
 def solidjacobianSens(XSens, N, Na, Nb, Nc, XptsSens):
-    XaSens = np.zeros(num_nodes*9)
-    XSens = np.zeros(9)
+    XaSens = np.zeros(9)
+    XSens = np.zeros(3)
     # print X
     # print('Xpts=',Xpts)
     # print('N=',N)
@@ -369,24 +398,24 @@ def solidjacobianSens(XSens, N, Na, Nb, Nc, XptsSens):
     # print('Nb=',Nb)
     
     for i in range(num_nodes):
-        XSens[3*i] = N[i]
-        XSens[3*i+1] = N[i]
-        XSens[3*i+2] = N[i]
+        XSens[0] += XptsSens[3*i]*N[i]
+        XSens[1] += XptsSens[3*i+1]*N[i]
+        XSens[2] += XptsSens[3*i+2]*N[i]
 
-        XaSens[9*i] = Na[i]
-        XaSens[9*i+1] = Nb[i]
-        XaSens[9*i+2] = Nc[i]
+        XaSens[0] += XptsSens[3*i]*Na[i]
+        XaSens[1] += XptsSens[3*i]*Nb[i]
+        XaSens[2] += XptsSens[3*i]*Nc[i]
 
-        XaSens[9*i+3] = Na[i]
-        XaSens[9*i+4] = Nb[i]
-        XaSens[9*i+5] = Nc[i]
+        XaSens[3] += XptsSens[3*i+1]*Na[i]
+        XaSens[4] += XptsSens[3*i+1]*Nb[i]
+        XaSens[5] += XptsSens[3*i+1]*Nc[i]
         
-        XaSens[9*i+6] = Na[i]
-        XaSens[9*i+7] = Nb[i]
-        XaSens[9*i+8] = Nc[i]
+        XaSens[6] += XptsSens[3*i+2]*Na[i]
+        XaSens[7] += XptsSens[3*i+2]*Nb[i]
+        XaSens[8] += XptsSens[3*i+2]*Nc[i]
 
-    print('in solidjacobianSens, Xd=',XaSens)
-    return XaSens
+    print('in solidjacobianSens, XdSens=',XaSens)
+    return XaSens, XSens
 
 def jacobian3d(Xd):
     # print('Xd=',Xd)
@@ -467,7 +496,7 @@ def getDeformGradientReverse(Udb, J, Jb, Na, Nb, Nc, vars, varsb):
     
     Uab[3] = Uab[3]+Udb[3]*J[0]
     Uab[4] = Uab[4]+Udb[3]*J[3]
-    Uab[2] = Uab[2]+Udb[3]*J[6]
+    Uab[5] = Uab[5]+Udb[3]*J[6]
 
     Jb[0] = Jb[0]+Udb[3]*Ua[3]
     Jb[3] = Jb[3]+Udb[3]*Ua[4]
@@ -546,8 +575,8 @@ def getDeformGradientReverse(Udb, J, Jb, Na, Nb, Nc, vars, varsb):
     
         
 def jacobian3dReverse(Xd, Jinvb):
-    h = (Xd[8]*(Xd[0]*Xd[4] - Xd[3]*Xd[1]) 
-                  - Xd[7]*(Xd[0]*Xd[5] - Xd[3]*Xd[2]) 
+    h = (Xd[8]*(Xd[0]*Xd[4] - Xd[3]*Xd[1]) \
+                  - Xd[7]*(Xd[0]*Xd[5] - Xd[3]*Xd[2]) \
                   + Xd[6]*(Xd[1]*Xd[5] - Xd[2]*Xd[4]))
     hinv = 1.0/h
     Xdb = np.zeros(9)
@@ -619,51 +648,153 @@ def jacobian3dReverse(Xd, Jinvb):
     return Xdb
 
 
-def solidjacobianReverse(Xptsb, Xb, Xab, N, Na, Nb, Nc):
-    global num_nodes
-
+def solidjacobianReverse(Xb, Xab, N, Na, Nb, Nc):
+    Xptsb = np.zeros(3*num_nodes)
 
     for i in range(num_nodes):
+        print('3*i=',3*i)
+        print('Xb[0]=',Xb[0])
+        print('N[i]=',N[i])
+        print('Xb[0]*N[i]=',Xb[0]*N[i])
         Xptsb[3*i] = Xptsb[3*i]+Xb[0]*N[i]
+        print('Xptsb[3*i]=',Xptsb[3*i])
         Xptsb[3*i+1] = Xptsb[3*i+1]+Xb[1]*N[i]
         Xptsb[3*i+2] = Xptsb[3*i+2]+Xb[2]*N[i]
         
-        Xptsb[3*i] = Xptsb[3*i]+Xab[0]*Na[i]
-        Xptsb[3*i] = Xptsb[3*i]+Xab[1]*Nb[i]
-        Xptsb[3*i] = Xptsb[3*i]+Xab[2]*Nc[i]
+        Xptsb[3*i] = Xptsb[3*i]+Xab[0]*Na[i]+Xab[1]*Nb[i]+Xab[2]*Nc[i]
 
-        Xptsb[3*i+1] = Xptsb[3*i+1]+Xab[3]*Na[i]
-        Xptsb[3*i+1] = Xptsb[3*i+1]+Xab[4]*Nb[i]
-        Xptsb[3*i+1] = Xptsb[3*i+1]+Xab[5]*Nc[i]
-        
-        Xptsb[3*i+2] = Xptsb[3*i+2]+Xab[6]*Na[i]
-        Xptsb[3*i+2] = Xptsb[3*i+2]+Xab[7]*Nb[i]
-        Xptsb[3*i+2] = Xptsb[3*i+2]+Xab[8]*Nc[i]
+        Xptsb[3*i+1] = Xptsb[3*i+1]+Xab[3]*Na[i]+Xab[4]*Nb[i]+Xab[5]*Nc[i]
+
+        Xptsb[3*i+2] = Xptsb[3*i+2]+Xab[6]*Na[i]+Xab[7]*Nb[i]+Xab[8]*Nc[i]
+
 
     return Xptsb 
 
 num_nodes = 8
-Xpts = 0.1*np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6])
-dXpts = 0.0000001*np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6])
+Xpts = np.array([5,6,3,2,1,4,7,8,6,5,6,3,2,1,4,7,8,6,5,6,3,2,1,4])
+dXptsf = 0.1*np.array([5,6,1,2,4,8,7,8,6,6,8,3,2,1,7,7,8,6,5,6,1,2,1,4])
 
-XptsSens = 0.1*np.array([4,7,0,3,4,7,5,3,4,7,1,9,3,4,6,8,1,4,6,5,7,3,7,2,3,4,1])
-vars = 0.1*np.array([2,5,6,6,7,5,4,7,1,2,5,6,6,7,5,4,7,1,2,5,6,6,7,5,4,7,1])
+# XptsSens = 0.1*np.array([4,7,0,3,4,7,5,3,4,7,1,9,3,4,6,8,1,4,6,5,7,3,7,2,3,4,1])
+vars = 0.1*np.array([2,5,6,6,7,5,4,7,1,2,5,6,6,7,5,4,7,1,2,5,6,6,7,5])
+dvars = 0.1*np.array([2,5,6,6,7,5,2,7,1,2,5,0,6,2,5,4,7,1,2,5,0,6,7,5])
+# vars = np.zeros(24)
+dvarsf = 0.01*np.array([5,6,1,2,4,8,7,5,3,6,8,3,2,1,7,1,8,6,5,3,1,2,3,4])
 Uaerob = 0.1*np.array([5,4,7])
 Xaero = 0.1*np.array([2,9,8])
 XaeroSens = 0.1*np.array([6,4,1])
 pt = 0.1*np.array([0.2,0.5,0.25])
 
 
+# 1. Start check the overall derivative ==================
 
-# Xaerob, varsb, Xptsb = getRDSens(Uaerob,Xaero, pt, vars, Xpts)
 Uaero = getRD(Xaero,pt, vars, Xpts)
 print('Uaero = ', Uaero)
+step = 1e-9
+dXpts = step*dXptsf
 Xpts_2 = Xpts+dXpts
 Uaero_2 = getRD(Xaero,pt, vars, Xpts_2)
-FD = (Uaero-Uaero_2)/np.linalg.norm(dXpts)
+FD = (Uaero_2-Uaero)/step
 print('FD_Uaero = ', FD)
-UaeroSens = getRDXptSens(Xaero,XaeroSens,pt,vars,Xpts,XptsSens)
+UaeroSens = getRDforward(Xaero,XaeroSens,pt,dvars,vars,Xpts,dXptsf)
 print('UaeroSens = ', UaeroSens)
 print('X_aero = \n',Xaero)
-# print('varsb = \n',varsb)
-# print('Xptsb = \n',Xptsb)
+
+Xaerob, varsb, Xptsb = getRDSens(Uaerob,Xaero,pt, vars, Xpts)
+print('Xptsb = ', Xptsb)
+print('varsb = \n',varsb)
+
+A_dotproc = np.inner(UaeroSens,Uaerob)
+y_dotproc = np.inner(dXptsf,Xptsb)
+print('A_dotproc = ',A_dotproc)
+print('y_dotproc = ',y_dotproc)
+
+# End check the overall derivative ==================
+
+# 2. Start check derivative in jacobian3d ==================
+
+# Xa = np.array([2.1799125, 5.0880075, 2.7141975, 2.3441475, 5.2246125, 2.9185425,
+#        1.9667775, 5.1750375, 2.4490575])
+# XaSens = np.array([0.221712 , 0.5179335, 0.2867895, 0.2489595, 0.598014 , 0.351936 ,
+#        0.195126 , 0.6087915, 0.2712915])
+# Jb = np.array([  0.50058059,   3.76930829,  -5.58316351,   0.57727653,
+#          8.83074722, -14.80254927,   0.62360011,   4.69433036,
+#         -6.95282285])
+# sh = 0.0
+# J, JSens, sh, h = jacobian3dSens(Xa, XaSens, sh)
+# Xab = jacobian3dReverse(Xa, Jb)
+
+# A_dotproc = np.inner(JSens,Jb)
+# y_dotproc = np.inner(XaSens,Xab)
+# print('A_dotproc = ',A_dotproc)
+# print('y_dotproc = ',y_dotproc)
+
+# End check derivative in jacobian3d ==================
+
+# 4. Start check derivative in solidjacobian ==================
+# N = np.array([1.097775, 1.743525, 1.725075, 2.739825, 1.740375, 2.764125,\
+#        2.734875, 4.343625])
+# Na = np.array([0.0495075, 0.0236775, 0.0777975, 0.0372075, 0.0784875, 0.0375375,\
+#        0.1233375, 0.0589875])
+# Nb = np.array([0.1202325, 0.1909575, 0.0575025, 0.0913275, 0.1906125, 0.3027375,\
+#        0.0911625, 0.1447875])
+# Nc = np.array([0.0615825, 0.0978075, 0.0967725, 0.1536975, 0.0294525, 0.0467775,\
+#        0.0462825, 0.0735075])
+# XptsSens = np.array([0.5, 0.6, 0.1, 0.2, 0.4, 0.8, 0.7, 0.8, 0.6, 0.6, 0.8, 0.3, 0.2,\
+#        0.1, 0.7, 0.7, 0.8, 0.6, 0.5, 0.6, 0.1, 0.2, 0.1, 0.4])
+# Xb = np.array([ 1.26214286, -0.93142857, -0.36928571])
+# # Xb = np.zeros(3)
+# Xab = np.array([-1.07880848e+05,  2.59900413e+01,  8.65887554e+04,  7.23973658e+04,\
+#        -1.73807747e+01, -5.81088230e+04,  2.35888851e+04, -5.94684082e+00,
+#        -1.89319642e+04])
+# # Xab = np.zeros(24)
+
+# XSens = np.zeros(3)
+# XaSens = np.zeros(9)
+# XaSens, XSens = solidjacobian(XSens,N, Na, Nb, Nc, XptsSens)
+
+# Xptsb = np.zeros_like(Xpts)
+# Xptsb = solidjacobianReverse(Xb, Xab, N, Na, Nb, Nc)
+
+# A_dotproc = np.inner(XaSens,Xab) + np.inner(XSens,Xb)
+# y_dotproc = np.inner(XptsSens,Xptsb)
+# print('A_dotproc = ',A_dotproc)
+# print('y_dotproc = ',y_dotproc)
+
+# End check derivative in solidjacobian ==================
+
+
+# 5. Start check derivative in getDeformGradient ==================
+
+# Na = np.array([0.0495075, 0.0236775, 0.0777975, 0.0372075, 0.0784875, 0.0375375,
+#        0.1233375, 0.0589875])
+# Nb = np.array([0.1202325, 0.1909575, 0.0575025, 0.0913275, 0.1906125, 0.3027375,
+#        0.0911625, 0.1447875])
+# Nc = np.array([0.0615825, 0.0978075, 0.0967725, 0.1536975, 0.0294525, 0.0467775,
+#        0.0462825, 0.0735075])
+# J = np.array([-4.05584508e+04,  2.78552930e+04,  1.17542318e+04, -1.45544008e+01,
+#         8.93484319e+00,  5.48243509e+00,  3.26022432e+04, -2.23887768e+04,
+#        -9.45070925e+03])
+# JSens = np.array([-3.47342354e+07,  2.38551864e+07,  1.00658475e+07, -1.21787226e+04,
+#         8.36445731e+03,  3.52910319e+03,  2.79195634e+07, -1.91749263e+07,
+#        -8.09098137e+06])
+# varsb = np.array([0.5488875, 0.43911  , 0.7684425, 0.8717625, 0.69741  , 1.2204675,
+#        0.8625375, 0.69003  , 1.2075525, 1.3699125, 1.09593  , 1.9178775,
+#        0.8701875, 0.69615  , 1.2182625, 1.3820625, 1.10565  , 1.9348875,
+#        1.3674375, 1.09395  , 1.9144125, 2.1718125, 1.73745  , 3.0405375])
+
+# Udb = np. array([  0.        ,   4.62062875,  -8.6189575 ,  -4.62062875,
+#          0.        , -13.36404625,   8.6189575 ,  13.36404625,
+#          0.        ])
+# Jb = np.zeros(9)
+# Jb, varsb = getDeformGradientReverse(Udb, J, Jb, Na, Nb, Nc, vars, varsb)
+
+# Ud = np.zeros(9)
+# UdSens = np.zeros(9)
+# Ud, UdSens = getDeformGradientSens(J, JSens, Na, Nb, Nc, vars)
+
+# A_dotproc = np.inner(UdSens,Udb)
+# y_dotproc = np.inner(JSens,Jb)
+# print('A_dotproc = ',A_dotproc)
+# print('y_dotproc = ',y_dotproc)
+
+# End check derivative in getDeformGradient ==================
